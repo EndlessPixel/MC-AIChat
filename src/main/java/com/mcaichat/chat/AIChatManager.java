@@ -309,3 +309,52 @@ public class AIChatManager {
         sb.append(ChatColor.GRAY).append("---\n");
         for (String name : contextManager.getContextNames()) {
             if (name.equals(contextManager.getActiveContext())) {
+                sb.append(ChatColor.GREEN).append("* ").append(name).append("\n");
+            } else {
+                sb.append(ChatColor.WHITE).append("  ").append(name).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    public List<String> getContextNames(Player player) {
+        PlayerContextManager contextManager = getPlayerContext(player);
+        return new ArrayList<>(contextManager.getContextNames());
+    }
+
+    public void clearHistory(Player player) {
+        PlayerContextManager contextManager = getPlayerContext(player);
+        contextManager.clearAll();
+    }
+
+    public boolean isPlayerBanned(UUID playerId) {
+        return bannedPlayers.getOrDefault(playerId, false);
+    }
+
+    public void banPlayer(UUID playerId) {
+        bannedPlayers.put(playerId, true);
+    }
+
+    public void unbanPlayer(UUID playerId) {
+        bannedPlayers.remove(playerId);
+    }
+
+    public void shutdown() {
+        playerContexts.clear();
+        bannedPlayers.clear();
+    }
+
+    private static class APIResult {
+        String response;
+        int promptTokens;
+        int completionTokens;
+        int totalTokens;
+
+        APIResult(String response, int promptTokens, int completionTokens, int totalTokens) {
+            this.response = response;
+            this.promptTokens = promptTokens;
+            this.completionTokens = completionTokens;
+            this.totalTokens = totalTokens;
+        }
+    }
+}
