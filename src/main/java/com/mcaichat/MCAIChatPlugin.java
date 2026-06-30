@@ -1,8 +1,7 @@
 package com.mcaichat;
 
-import co.aikar.commands.BukkitCommandCompletionContext;
-import co.aikar.commands.CommandCompletions;
 import co.aikar.commands.PaperCommandManager;
+import co.aikar.commands.annotation.CommandCompletion;
 import com.mcaichat.chat.AIChatManager;
 import com.mcaichat.command.AICommand;
 import com.mcaichat.config.Config;
@@ -53,19 +52,18 @@ public class MCAIChatPlugin extends JavaPlugin {
     private void registerCommands() {
         commandManager = new PaperCommandManager(this);
         
-        commandManager.getCommandCompletions().registerCompletion("contexts", 
-            (CommandCompletions.CommandCompletionContext<BukkitCommandCompletionContext> context) -> {
-                Player player = context.getSender().getPlayer();
-                if (player != null) {
-                    return chatManager.getContextNames(player);
-                }
-                return null;
-            });
+        commandManager.getCommandCompletions().registerCompletion("contexts", context -> {
+            Player player = context.getPlayer();
+            if (player != null) {
+                return chatManager.getContextNames(player);
+            }
+            return null;
+        });
         
-        commandManager.getCommandCompletions().registerCompletion("languages", 
-            (CommandCompletions.CommandCompletionContext<BukkitCommandCompletionContext> context) -> {
-                return langManager.getAvailableLangs();
-            });
+        commandManager.getCommandCompletions().registerCompletion("languages", context -> {
+            java.util.Arrays.asList(langManager.getAvailableLangs());
+            return java.util.Arrays.asList(langManager.getAvailableLangs());
+        });
 
         commandManager.registerCommand(new AICommand(this));
     }
