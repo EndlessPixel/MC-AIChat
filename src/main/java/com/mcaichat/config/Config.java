@@ -23,6 +23,7 @@ public class Config {
     private double frequencyPenalty;
     private int maxTokens;
     private int maxContext;
+    private String defaultLang;
 
     public Config(MCAIChatPlugin plugin) {
         this.plugin = plugin;
@@ -153,5 +154,9 @@ public class Config {
 
     public int getMaxContext() {
         return maxContext;
+    }
+
+    public String getDefaultLang() {
+        return defaultLang;
     }
 }

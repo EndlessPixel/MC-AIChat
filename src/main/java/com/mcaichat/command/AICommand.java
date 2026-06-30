@@ -125,4 +125,32 @@ public class AICommand extends BaseCommand {
         String contexts = plugin.getChatManager().listContexts(player);
         player.sendMessage(contexts);
     }
+
+    @Subcommand("ban")
+    @Syntax("<player>")
+    @Description("Ban a player from using AI chat")
+    @CommandPermission("mcaichat.ban")
+    public void onBan(CommandSender sender, Player target) {
+        if (target == null) {
+            sender.sendMessage(ChatColor.RED + "Player not found!");
+            return;
+        }
+        plugin.getChatManager().banPlayer(target.getUniqueId());
+        sender.sendMessage(ChatColor.GREEN + "Banned " + target.getName() + " from AI chat!");
+        target.sendMessage(ChatColor.RED + "You have been banned from AI chat!");
+    }
+
+    @Subcommand("unban")
+    @Syntax("<player>")
+    @Description("Unban a player from using AI chat")
+    @CommandPermission("mcaichat.unban")
+    public void onUnban(CommandSender sender, Player target) {
+        if (target == null) {
+            sender.sendMessage(ChatColor.RED + "Player not found!");
+            return;
+        }
+        plugin.getChatManager().unbanPlayer(target.getUniqueId());
+        sender.sendMessage(ChatColor.GREEN + "Unbanned " + target.getName() + " from AI chat!");
+        target.sendMessage(ChatColor.GREEN + "You have been unbanned from AI chat!");
+    }
 }

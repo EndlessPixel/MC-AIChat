@@ -29,6 +29,7 @@ public class AIChatManager {
     private final HttpClient httpClient;
     private final Gson gson;
     private final Map<UUID, PlayerContextManager> playerContexts = new ConcurrentHashMap<>();
+    private final Map<UUID, Boolean> bannedPlayers = new ConcurrentHashMap<>();
     private final DatabaseManager databaseManager;
     private String systemPrompt;
 
@@ -71,13 +72,19 @@ public class AIChatManager {
     }
 
     public void sendMessage(Player player, String message) {
+        if (isPlayerBanned(player.getUniqueId())) {
+            player.sendMessage(ChatColor.RED + "You have been banned from AI chat!");
+            return;
+        }
+
         PlayerContextManager contextManager = getPlayerContext(player);
         ChatHistory history = contextManager.getActiveHistory();
         String contextName = contextManager.getActiveContext();
 
         history.addUserMessage(message);
 
-        player.sendMessage(ChatColor.GRAY + "AI is thinking...");
+        player.sendMessage(ChatColor.WHITE + "| " + message);
+        player.sendMessage(ChatColor.GRAY + "AI is thinking.");
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
@@ -95,7 +102,7 @@ public class AIChatManager {
                 sendResponseToPlayer(player, response, contextName);
             } catch (Exception e) {
                 plugin.getLogger().severe("AI API error: " + e.getMessage());
-                sendResponseToPlayer(player, ChatColor.RED + "AI error: " + e.getMessage(), contextName);
+                sendResponseToPlayer(player, ChatColor.RED + "| AI error: " + e.getMessage(), contextName);
             }
         });
     }
@@ -169,11 +176,7 @@ public class AIChatManager {
 
     private void sendResponseToPlayer(Player player, String response, String contextName) {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            String prefix = ChatColor.AQUA + "[AI";
-            if (!"default".equals(contextName)) {
-                prefix += "/" + contextName;
-            }
-            prefix += "] " + ChatColor.WHITE;
+            String prefix = ChatColor.WHITE + "| ";
 
             int maxLength = 256;
             String[] lines = response.split("\n");
@@ -257,7 +260,20 @@ public class AIChatManager {
         contextManager.clearAll();
     }
 
+    public boolean isPlayerBanned(UUID playerId) {
+        return bannedPlayers.getOrDefault(playerId, false);
+    }
+
+    public void banPlayer(UUID playerId) {
+        bannedPlayers.put(playerId, true);
+    }
+
+    public void unbanPlayer(UUID playerId) {
+        bannedPlayers.remove(playerId);
+    }
+
     public void shutdown() {
         playerContexts.clear();
+        bannedPlayers.clear();
     }
 }
