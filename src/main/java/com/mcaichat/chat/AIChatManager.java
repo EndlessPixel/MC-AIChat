@@ -99,3 +99,69 @@ public class AIChatManager {
                     Integer contextId = contextManager.getContextId(contextName);
                     if (contextId != null) {
                         databaseManager.saveMessage(contextId, "user", message);
+                        databaseManager.saveMessage(contextId, "assistant", result.response);
+                    }
+                }
+
+                sendResponseToPlayer(player, result.response, contextName);
+            } catch (Exception e) {
+                plugin.getLogger().severe("AI API error: " + e.getMessage());
+                sendResponseToPlayer(player, ChatColor.RED + "| " + plugin.getLangManager().get(player.getUniqueId(), "ai_error").replace("{0}", e.getMessage()), contextName);
+            }
+        });
+    }
+
+    private APIResult callAPI(ChatHistory history) throws IOException, InterruptedException {
+        Config config = plugin.getPluginConfig();
+        String apiKey = config.getApiKey();
+
+        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("sk-xxx")) {
+            throw new IllegalStateException("API key not configured");
+        }
+
+        JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("model", config.getModel());
+
+        JsonArray messages = new JsonArray();
+        JsonObject systemMessage = new JsonObject();
+        systemMessage.addProperty("role", "system");
+        systemMessage.addProperty("content", systemPrompt);
+        messages.add(systemMessage);
+
+        for (ChatHistory.Message msg : history.getMessages()) {
+            JsonObject message = new JsonObject();
+            message.addProperty("role", msg.getRole());
+            message.addProperty("content", msg.getContent());
+            messages.add(message);
+        }
+
+        requestBody.add("messages", messages);
+        requestBody.addProperty("temperature", config.getTemperature());
+        requestBody.addProperty("top_p", config.getTopP());
+        requestBody.addProperty("presence_penalty", config.getPresencePenalty());
+        requestBody.addProperty("frequency_penalty", config.getFrequencyPenalty());
+
+        if (config.getMaxTokens() > 0) {
+            requestBody.addProperty("max_tokens", config.getMaxTokens());
+        }
+
+        String apiUrl = config.getApi().endsWith("/") ? config.getApi() + "chat/completions"
+                : config.getApi() + "/chat/completions";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request,
+                HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new IOException("API request failed with status " + response.statusCode()
+                    + ": " + response.body());
+        }
+
+        JsonObject responseBody = gson.fromJson(response.body(), JsonObject.class);
+        JsonArray choices = responseBody.getAsJsonArray("
