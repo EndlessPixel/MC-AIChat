@@ -22,11 +22,11 @@ public class AICommand extends BaseCommand {
         this.plugin = plugin;
     }
 
-    @Default
+    @Subcommand("chat")
     @Syntax("<message>")
     @Description("Send a message to AI")
     @CommandCompletion("")
-    public void onCommand(CommandSender sender, String message) {
+    public void onChat(CommandSender sender, String message) {
         if (!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "Only players can use this command!");
             return;
@@ -46,7 +46,7 @@ public class AICommand extends BaseCommand {
 
         Player player = (Player) sender;
         plugin.getChatManager().clearActiveContext(player);
-        player.sendMessage(ChatColor.GREEN + "Current context history cleared!");
+        player.sendMessage(ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(), "context_history_cleared"));
     }
 
     @Subcommand("reload")
@@ -55,7 +55,8 @@ public class AICommand extends BaseCommand {
     public void onReload(CommandSender sender) {
         plugin.getPluginConfig().load();
         plugin.getDbConfig().load();
-        sender.sendMessage(ChatColor.GREEN + "Config and database config reloaded!");
+        plugin.getLangManager().reload();
+        sender.sendMessage(ChatColor.GREEN + plugin.getLangManager().get(null, "config_reloaded"));
     }
 
     @Subcommand("context")
@@ -88,6 +89,7 @@ public class AICommand extends BaseCommand {
     @Subcommand("context switch")
     @Syntax("<name>")
     @Description("Switch to another chat context")
+    @CommandCompletion("@contexts")
     public void onSwitchContext(CommandSender sender, String name) {
         if (!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "Only players can use this command!");
@@ -102,6 +104,7 @@ public class AICommand extends BaseCommand {
     @Subcommand("context delete")
     @Syntax("<name>")
     @Description("Delete a chat context")
+    @CommandCompletion("@contexts")
     public void onDeleteContext(CommandSender sender, String name) {
         if (!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "Only players can use this command!");
@@ -136,8 +139,8 @@ public class AICommand extends BaseCommand {
             return;
         }
         plugin.getChatManager().banPlayer(target.getUniqueId());
-        sender.sendMessage(ChatColor.GREEN + "Banned " + target.getName() + " from AI chat!");
-        target.sendMessage(ChatColor.RED + "You have been banned from AI chat!");
+        sender.sendMessage(ChatColor.GREEN + plugin.getLangManager().get(null, "player_banned").replace("{0}", target.getName()));
+        target.sendMessage(ChatColor.RED + plugin.getLangManager().get(target.getUniqueId(), "banned"));
     }
 
     @Subcommand("unban")
@@ -150,7 +153,27 @@ public class AICommand extends BaseCommand {
             return;
         }
         plugin.getChatManager().unbanPlayer(target.getUniqueId());
-        sender.sendMessage(ChatColor.GREEN + "Unbanned " + target.getName() + " from AI chat!");
-        target.sendMessage(ChatColor.GREEN + "You have been unbanned from AI chat!");
+        sender.sendMessage(ChatColor.GREEN + plugin.getLangManager().get(null, "player_unbanned").replace("{0}", target.getName()));
+        target.sendMessage(ChatColor.GREEN + plugin.getLangManager().get(target.getUniqueId(), "lang_set").replace("{0}", ""));
+    }
+
+    @Subcommand("lang")
+    @Syntax("<lang_code>")
+    @Description("Set your language (zh-CN, en, jp)")
+    @CommandCompletion("@languages")
+    public void onLang(CommandSender sender, String langCode) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "Only players can use this command!");
+            return;
+        }
+
+        Player player = (Player) sender;
+        if (plugin.getLangManager().isValidLang(langCode)) {
+            plugin.getLangManager().setPlayerLang(player.getUniqueId(), langCode);
+            player.sendMessage(ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(), "lang_set").replace("{0}", langCode));
+        } else {
+            String available = String.join(", ", plugin.getLangManager().getAvailableLangs());
+            player.sendMessage(ChatColor.RED + plugin.getLangManager().get(player.getUniqueId(), "lang_invalid").replace("{0}", available));
+        }
     }
 }
