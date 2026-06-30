@@ -1,5 +1,7 @@
 # Security Policy
 
+[English](SECURITY.md) | [中文](SECURITY_zh-CN.md)
+
 ## Reporting Security Issues
 
 If you discover a security vulnerability in MC-AIChat, please report it responsibly.

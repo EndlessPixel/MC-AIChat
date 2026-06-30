@@ -2,6 +2,8 @@
 
 A Minecraft Paper plugin that allows players to chat with AI through the `/ai` or `/aichat` command.
 
+[English](README.md) | [中文](README_zh-CN.md)
+
 ## Features
 
 - Chat with AI using OpenAI-compatible APIs
