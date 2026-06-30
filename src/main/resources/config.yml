@@ -1,0 +1,136 @@
+# ============================================
+# MC-AIChat 配置文件
+# 首次启动服务器后，此文件会生成在 plugins/MC-AIChat/config.yml
+# 修改后使用 /ai reload 命令重新加载，无需重启服务器
+# ============================================
+
+# 【API 设置】
+# AI API 的基础地址
+# 支持 OpenAI 官方 API 或兼容 OpenAI 格式的第三方 API（如 DeepSeek、Ollama 等）
+# 示例：
+#   OpenAI 官方: https://api.openai.com/v1
+#   DeepSeek: https://api.deepseek.com/v1
+#   Ollama (本地): http://localhost:11434/v1
+api: "https://api.openai.com/v1"
+
+# 【API 密钥】
+# 你的 AI API 密钥
+# 获取方式：
+#   OpenAI: https://platform.openai.com/api-keys
+#   DeepSeek: https://platform.deepseek.com/api_keys
+#   其他平台请查看各自的文档
+# 注意：请妥善保管你的密钥，不要分享给他人！
+api_key: "sk-xxx"
+
+# 【环境变量密钥】
+# 如果设置为 true，则忽略上面的 api_key 设置，
+# 从系统环境变量 MC-AICHAT-KEY 中读取密钥
+# 推荐在生产环境使用此方式，避免将密钥写入配置文件
+# 使用方法：
+#   Windows (PowerShell): $env:MC-AICHAT-KEY="sk-xxx"
+#   Linux/macOS (bash): export MC-AICHAT-KEY="sk-xxx"
+env_api_key: false
+
+# ============================================
+# 【AI 模型设置】
+# ============================================
+
+# 【模型名称】
+# 要使用的 AI 模型名称
+# 不同平台支持的模型不同，请根据你的 API 服务商选择：
+#   OpenAI: gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+#   DeepSeek: deepseek-chat, deepseek-r1.5
+#   Ollama: llama3.2, gemma2, qwen2 等（需先在本地 pull）
+model: "gpt-4o"
+
+# 【温度参数】
+# 控制 AI 回答的随机性和创造性
+# 值范围：0 ~ 2
+#   0 = 确定性高，回答更保守、一致
+#   1 = 默认值，平衡创造性和一致性
+#   2 = 高度随机，回答更有创意但可能不太连贯
+temperature: 1
+
+# 【Top-P 参数】
+# 控制核采样，限制只考虑概率最高的一部分 token
+# 值范围：0 ~ 1
+#   0.1 = 只考虑最可能的 token，回答更确定
+#   1.0 = 考虑所有 token，回答更多样化
+# 通常不需要修改，保持默认值即可
+top_p: 1
+
+# 【存在惩罚】
+# 减少重复提到相同主题的概率
+# 值范围：0 ~ 2
+#   0 = 不惩罚，AI 可能重复相同内容
+#   1 = 适度惩罚，减少重复
+#   2 = 强烈惩罚，AI 会尽量避免重复话题
+# 适合希望 AI 每次回答都引入新内容的场景
+presence_penalty: 1
+
+# 【频率惩罚】
+# 减少重复使用相同词汇的概率
+# 值范围：0 ~ 2
+#   0 = 不惩罚，AI 可能重复使用相同的词
+#   1 = 适度惩罚，减少词汇重复
+#   2 = 强烈惩罚，AI 会尽量使用不同的表达方式
+# 适合希望 AI 使用丰富词汇的场景
+frequency_penalty: 1
+
+# ============================================
+# 【响应控制】
+# ============================================
+
+# 【最大 Token 数】
+# AI 回答的最大长度（以 token 为单位）
+#   0 = 无限制，使用 API 默认值
+#   其他值 = 限制回答长度
+# 注意：不同模型有不同的最大 token 限制，超出会报错
+# 例如：gpt-4o 支持最多 128000 token
+max_tokens: 0
+
+# 【最大上下文数】
+# 保留的最大对话历史条数（用户+AI 为一对）
+#   0 = 无限制，保留所有对话历史
+#   其他值 = 只保留最近的 N 条对话
+# 注意：历史越多，API 调用费用越高，响应时间也可能更长
+# 建议根据需求设置合理的值（如 10-30）
+max_context: 20
+
+# ============================================
+# 【配置参考】
+# ============================================
+#
+# 常用配置方案：
+#
+# 1. 日常聊天（平衡创意和稳定性）：
+#    temperature: 0.7
+#    presence_penalty: 0.5
+#    frequency_penalty: 0.5
+#    max_context: 20
+#
+# 2. 严肃问答（高度确定，减少幻觉）：
+#    temperature: 0.1
+#    presence_penalty: 0
+#    frequency_penalty: 0
+#    max_context: 10
+#
+# 3. 创意写作（高度随机，富有想象力）：
+#    temperature: 1.5
+#    presence_penalty: 1.0
+#    frequency_penalty: 0.5
+#    max_context: 30
+#
+# 4. 使用 DeepSeek API：
+#    api: "https://api.deepseek.com/v1"
+#    api_key: "sk-xxx"
+#    model: "deepseek-chat"
+#
+# 5. 使用本地 Ollama：
+#    api: "http://localhost:11434/v1"
+#    api_key: "ollama"  # Ollama 不需要真实密钥，任意字符串即可
+#    model: "llama3.2"
+#
+# ============================================
+# 修改配置后请使用 /ai reload 命令重新加载！
+# ============================================
