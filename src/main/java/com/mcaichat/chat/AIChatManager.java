@@ -164,4 +164,81 @@ public class AIChatManager {
         }
 
         JsonObject responseBody = gson.fromJson(response.body(), JsonObject.class);
-        JsonArray choices = responseBody.getAsJsonArray("
+        JsonArray choices = responseBody.getAsJsonArray("choices");
+        if (choices == null || choices.isEmpty()) {
+            throw new IOException("No choices in response");
+        }
+
+        JsonObject firstChoice = choices.get(0).getAsJsonObject();
+        JsonObject message = firstChoice.getAsJsonObject("message");
+        if (message == null) {
+            throw new IOException("No message in response");
+        }
+
+        int promptTokens = 0;
+        int completionTokens = 0;
+        int totalTokens = 0;
+
+        JsonObject usage = responseBody.getAsJsonObject("usage");
+        if (usage != null) {
+            if (usage.has("prompt_tokens")) {
+                promptTokens = usage.get("prompt_tokens").getAsInt();
+            }
+            if (usage.has("completion_tokens")) {
+                completionTokens = usage.get("completion_tokens").getAsInt();
+            }
+            if (usage.has("total_tokens")) {
+                totalTokens = usage.get("total_tokens").getAsInt();
+            }
+        }
+
+        return new APIResult(message.get("content").getAsString(), promptTokens, completionTokens, totalTokens);
+    }
+
+    private void sendResponseToPlayer(Player player, String response, String contextName) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            String prefix = ChatColor.WHITE + "| ";
+
+            int maxLength = 256;
+            String[] lines = response.split("\n");
+
+            for (String line : lines) {
+                while (line.length() > maxLength) {
+                    player.sendMessage(prefix + line.substring(0, maxLength));
+                    line = line.substring(maxLength);
+                }
+                player.sendMessage(prefix + line);
+            }
+        });
+    }
+
+    public String createContext(Player player, String name) {
+        PlayerContextManager contextManager = getPlayerContext(player);
+        if (contextManager.createContext(name)) {
+            if (databaseManager != null && databaseManager.getConnection() != null) {
+                int contextId = databaseManager.insertContext(player.getUniqueId(), name, true);
+                contextManager.setContextId(name, contextId);
+                databaseManager.updateActiveContext(player.getUniqueId(), name);
+            }
+            return ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(), "context_created").replace("{0}", name);
+        }
+        return ChatColor.RED + plugin.getLangManager().get(player.getUniqueId(), "context_exists").replace("{0}", name);
+    }
+
+    public String switchContext(Player player, String name) {
+        PlayerContextManager contextManager = getPlayerContext(player);
+        
+        if (contextManager.switchContext(name)) {
+            if (databaseManager != null && databaseManager.getConnection() != null) {
+                databaseManager.updateActiveContext(player.getUniqueId(), name);
+            }
+            return ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(), "context_switched").replace("{0}", name);
+        }
+
+        String fuzzyMatch = findFuzzyContext(contextManager, name);
+        if (fuzzyMatch != null) {
+            contextManager.switchContext(fuzzyMatch);
+            if (databaseManager != null && databaseManager.getConnection() != null) {
+                databaseManager.updateActiveContext(player.getUniqueId(), fuzzyMatch);
+            }
+            return ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(),
