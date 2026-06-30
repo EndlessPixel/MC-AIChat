@@ -241,4 +241,71 @@ public class AIChatManager {
             if (databaseManager != null && databaseManager.getConnection() != null) {
                 databaseManager.updateActiveContext(player.getUniqueId(), fuzzyMatch);
             }
-            return ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(),
+            return ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(), "context_switched").replace("{0}", fuzzyMatch);
+        }
+
+        return ChatColor.RED + plugin.getLangManager().get(player.getUniqueId(), "context_not_found").replace("{0}", name);
+    }
+
+    private String findFuzzyContext(PlayerContextManager contextManager, String input) {
+        String lowerInput = input.toLowerCase();
+        String bestMatch = null;
+        int bestScore = Integer.MAX_VALUE;
+
+        for (String contextName : contextManager.getContextNames()) {
+            String lowerName = contextName.toLowerCase();
+            if (lowerName.contains(lowerInput)) {
+                int score = Math.abs(lowerName.length() - lowerInput.length());
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMatch = contextName;
+                }
+            }
+        }
+
+        return bestMatch;
+    }
+
+    public String deleteContext(Player player, String name) {
+        PlayerContextManager contextManager = getPlayerContext(player);
+        
+        String targetName = name;
+        if (!contextManager.getContextNames().contains(name)) {
+            String fuzzyMatch = findFuzzyContext(contextManager, name);
+            if (fuzzyMatch != null) {
+                targetName = fuzzyMatch;
+            }
+        }
+
+        if (contextManager.deleteContext(targetName)) {
+            if (databaseManager != null && databaseManager.getConnection() != null) {
+                databaseManager.deleteContext(player.getUniqueId(), targetName);
+            }
+            return ChatColor.GREEN + plugin.getLangManager().get(player.getUniqueId(), "context_deleted")
+                    .replace("{0}", targetName)
+                    .replace("{1}", contextManager.getActiveContext());
+        }
+        return ChatColor.RED + plugin.getLangManager().get(player.getUniqueId(), "context_cannot_delete").replace("{0}", targetName);
+    }
+
+    public void clearActiveContext(Player player) {
+        PlayerContextManager contextManager = getPlayerContext(player);
+        String contextName = contextManager.getActiveContext();
+        contextManager.clearActiveContext();
+
+        if (databaseManager != null && databaseManager.getConnection() != null) {
+            Integer contextId = contextManager.getContextId(contextName);
+            if (contextId != null) {
+                databaseManager.clearContextMessages(contextId);
+            }
+        }
+    }
+
+    public String listContexts(Player player) {
+        PlayerContextManager contextManager = getPlayerContext(player);
+        StringBuilder sb = new StringBuilder();
+        sb.append(ChatColor.GOLD).append(plugin.getLangManager().get(player.getUniqueId(), "context_list_title")).append("\n");
+        sb.append(ChatColor.YELLOW).append(plugin.getLangManager().get(player.getUniqueId(), "context_list_active").replace("{0}", contextManager.getActiveContext())).append("\n");
+        sb.append(ChatColor.GRAY).append("---\n");
+        for (String name : contextManager.getContextNames()) {
+            if (name.equals(contextManager.getActiveContext())) {
