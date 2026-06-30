@@ -1,11 +1,15 @@
 package com.mcaichat;
 
+import co.aikar.commands.BukkitCommandCompletionContext;
+import co.aikar.commands.CommandCompletions;
 import co.aikar.commands.PaperCommandManager;
 import com.mcaichat.chat.AIChatManager;
 import com.mcaichat.command.AICommand;
 import com.mcaichat.config.Config;
 import com.mcaichat.config.DbConfig;
 import com.mcaichat.database.DatabaseManager;
+import com.mcaichat.lang.LangManager;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MCAIChatPlugin extends JavaPlugin {
@@ -13,6 +17,7 @@ public class MCAIChatPlugin extends JavaPlugin {
     private DbConfig dbConfig;
     private DatabaseManager databaseManager;
     private AIChatManager chatManager;
+    private LangManager langManager;
     private PaperCommandManager commandManager;
 
     @Override
@@ -20,6 +25,7 @@ public class MCAIChatPlugin extends JavaPlugin {
         this.config = new Config(this);
         this.dbConfig = new DbConfig(this);
         this.databaseManager = new DatabaseManager(this);
+        this.langManager = new LangManager(this);
         
         if (databaseManager.connect()) {
             getLogger().info("Database connection established!");
@@ -46,6 +52,21 @@ public class MCAIChatPlugin extends JavaPlugin {
 
     private void registerCommands() {
         commandManager = new PaperCommandManager(this);
+        
+        commandManager.getCommandCompletions().registerCompletion("contexts", 
+            (CommandCompletions.CommandCompletionContext<BukkitCommandCompletionContext> context) -> {
+                Player player = context.getSender().getPlayer();
+                if (player != null) {
+                    return chatManager.getContextNames(player);
+                }
+                return null;
+            });
+        
+        commandManager.getCommandCompletions().registerCompletion("languages", 
+            (CommandCompletions.CommandCompletionContext<BukkitCommandCompletionContext> context) -> {
+                return langManager.getAvailableLangs();
+            });
+
         commandManager.registerCommand(new AICommand(this));
     }
 
@@ -63,5 +84,9 @@ public class MCAIChatPlugin extends JavaPlugin {
 
     public AIChatManager getChatManager() {
         return chatManager;
+    }
+
+    public LangManager getLangManager() {
+        return langManager;
     }
 }
